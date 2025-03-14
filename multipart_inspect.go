@@ -3,6 +3,7 @@ package caddymultipart
 import (
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 
@@ -60,7 +61,41 @@ func (m *Middleware) Validate() error {
 func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	m.w.Write([]byte(r.RemoteAddr))
 	fmt.Fprintln(m.w, ".")
+
+	if r.Method == http.MethodPost && isMultipart(r) {
+		fileNames, err := m.inspectMultipartForm(r)
+		if err != nil {
+			// m.Logger.Printf("Error inspecting multipart form: %v", err)
+
+			fmt.Fprintf(m.w, "Error inspecting multipart form: %v\n", err)
+
+			// Important:  You might want to return an error to the client here,
+			// or continue with the request after logging the error.  It depends on
+			// your desired behavior. For now, we'll just log it and continue.
+		} else {
+			// m.Logger.Printf("Uploaded files: %v", fileNames)
+			fmt.Fprintf(m.w, "Uploaded files: %v\n", fileNames)
+		}
+	}
+
 	return next.ServeHTTP(w, r)
+}
+
+// inspectMultipartForm extracts filenames from a multipart form.
+func (m *Middleware) inspectMultipartForm(r *http.Request) ([]string, error) {
+	err := r.ParseMultipartForm(99 << 20) // 32MB is a reasonable default. Adjust as needed.
+	if err != nil {
+		return nil, fmt.Errorf("error parsing multipart form: %w", err)
+	}
+
+	var fileNames []string
+	for _, headers := range r.MultipartForm.File {
+		for _, header := range headers {
+			fileNames = append(fileNames, header.Filename)
+		}
+	}
+
+	return fileNames, nil
 }
 
 // UnmarshalCaddyfile implements caddyfile.Unmarshaler.
@@ -91,3 +126,18 @@ var (
 	_ caddyhttp.MiddlewareHandler = (*Middleware)(nil)
 	_ caddyfile.Unmarshaler       = (*Middleware)(nil)
 )
+
+// isMultipart checks if the request is a multipart form.
+func isMultipart(r *http.Request) bool {
+	contentType := r.Header.Get("Content-Type")
+	if contentType == "" {
+		return false
+	}
+
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return false
+	}
+
+	return mediaType == "multipart/form-data"
+}
