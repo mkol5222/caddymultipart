@@ -107,14 +107,15 @@ func (m *Middleware) inspectMultipartForm(r *http.Request) ([]string, error) {
 		return nil, fmt.Errorf("error parsing multipart form: %w", err)
 	}
 
+	fmt.Fprintf(m.w, "Done parsing the body. List file by file\n")
 	var fileNames []string
-	for _, headers := range r.MultipartForm.File {
+	for _, headers := range r2.MultipartForm.File {
 		for _, header := range headers {
 			fmt.Fprintf(m.w, "Found file %s...\n", header.Filename)
 			fileNames = append(fileNames, header.Filename)
 		}
 	}
-	fmt.Fprintf(m.w, "Dome inspecting files\n")
+	fmt.Fprintf(m.w, "Done inspecting files\n")
 	return fileNames, nil
 }
 
