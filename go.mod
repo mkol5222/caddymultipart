@@ -1,4 +1,4 @@
-module github.com/mkol5222/caddymultipart
+module github.com/mkol5222/caddymultipart/v0.0.1
 
 go 1.24.1
 
