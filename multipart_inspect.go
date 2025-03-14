@@ -85,6 +85,7 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 // inspectMultipartForm extracts filenames from a multipart form.
 func (m *Middleware) inspectMultipartForm(r *http.Request) ([]string, error) {
 
+	fmt.Fprintf(m.w, "Inspecting multipart form for files...\n")
 	// work on copy of request
 	r2 := r.Clone(r.Context())
 	// Copy the body of the original request to the cloned request
@@ -92,7 +93,8 @@ func (m *Middleware) inspectMultipartForm(r *http.Request) ([]string, error) {
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
-			fmt.Println("Error reading request body: ", err)
+			// fmt.Println("Error reading request body: ", err)
+			fmt.Fprintf(m.w, "Error reading request body: %v\n", err)
 			return nil, err
 		}
 		r.Body = io.NopCloser(&buf)
