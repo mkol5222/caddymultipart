@@ -110,10 +110,11 @@ func (m *Middleware) inspectMultipartForm(r *http.Request) ([]string, error) {
 	var fileNames []string
 	for _, headers := range r.MultipartForm.File {
 		for _, header := range headers {
+			fmt.Fprintf(m.w, "Found file %s...\n", header.Filename)
 			fileNames = append(fileNames, header.Filename)
 		}
 	}
-
+	fmt.Fprintf(m.w, "Dome inspecting files\n")
 	return fileNames, nil
 }
 
