@@ -83,7 +83,13 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 
 // inspectMultipartForm extracts filenames from a multipart form.
 func (m *Middleware) inspectMultipartForm(r *http.Request) ([]string, error) {
-	err := r.ParseMultipartForm(99 << 20) // 32MB is a reasonable default. Adjust as needed.
+
+	// work on copy of request
+	r2 := r.Clone(r.Context())
+	// close
+	defer r2.Body.Close()
+
+	err := r2.ParseMultipartForm(99 << 20) // 32MB is a reasonable default. Adjust as needed.
 	if err != nil {
 		return nil, fmt.Errorf("error parsing multipart form: %w", err)
 	}
