@@ -30,7 +30,7 @@ type Middleware struct {
 // CaddyModule returns the Caddy module information.
 func (Middleware) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
-		ID:  "http.handlers.visitor_ip",
+		ID:  "http.handlers.multipart_inspector",
 		New: func() caddy.Module { return new(Middleware) },
 	}
 }
