@@ -1,6 +1,7 @@
 package caddymultipart
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"mime"
@@ -86,9 +87,19 @@ func (m *Middleware) inspectMultipartForm(r *http.Request) ([]string, error) {
 
 	// work on copy of request
 	r2 := r.Clone(r.Context())
-	// close
-	defer r2.Body.Close()
+	// Copy the body of the original request to the cloned request
+	if r.Body != nil {
+		var buf bytes.Buffer
+		_, err := buf.ReadFrom(r.Body)
+		if err != nil {
+			fmt.Println("Error reading request body: ", err)
+			return nil, err
+		}
+		r.Body = io.NopCloser(&buf)
+		r2.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+	}
 
+	// Parse the multipart form
 	err := r2.ParseMultipartForm(99 << 20) // 32MB is a reasonable default. Adjust as needed.
 	if err != nil {
 		return nil, fmt.Errorf("error parsing multipart form: %w", err)
